@@ -1,0 +1,124 @@
+------->
+
+Create deployment file to deploy node.js application and do apply hpa and vpa to that pods.
+
+------->
+
+intime@knode1:~$ sudo vi node.yml
+
+intime@knode1:~$ cat node.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-deployment
+  labels:
+    app: nodeapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nodeapp
+  template:
+    metadata:
+      labels:
+        app: nodeapp
+    spec:
+      containers:
+      - name: node-container
+        image: mikki106/node_img
+        ports:
+        - containerPort: 3000
+
+
+intime@knode1:~$ kubectl apply -f node.yml
+deployment.apps/node-deployment created
+intime@knode1:~$ kubectl get all
+NAME                                   READY   STATUS              RESTARTS   AGE
+pod/node-deployment-6d8bb4fc6d-mznzs   0/1     ContainerCreating   0          31s
+
+NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP   73m
+
+NAME                              READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/node-deployment   0/1     1            0           31s
+
+NAME                                         DESIRED   CURRENT   READY   AGE
+replicaset.apps/node-deployment-6d8bb4fc6d   1         1         0       31s
+
+
+intime@knode1:~$ sudo vi nodeservice.yml
+
+intime@knode1:~$ cat nodeservice.yml 
+apiVersion: v1
+kind: Service
+metadata: 
+   name: node-service
+spec:
+  selector:
+     app: nodeapp
+  type: LoadBalancer
+  ports:
+  - name: node-port
+    port: 5000
+    targetPort: 3000
+
+intime@knode1:~$ kubectl apply -f nodeservice.yml
+service/node-service created
+intime@knode1:~$ kubectl get all
+NAME                                   READY   STATUS    RESTARTS   AGE
+pod/node-deployment-6d8bb4fc6d-mznzs   1/1     Running   0          13m
+
+NAME                   TYPE           CLUSTER-IP     EXTERNAL-IP   PORT(S)          AGE
+service/kubernetes     ClusterIP      10.96.0.1      <none>        443/TCP          86m
+service/node-service   LoadBalancer   10.110.18.66   <pending>     5000:32680/TCP   5s
+
+NAME                              READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/node-deployment   1/1     1            1           13m
+
+intime@knode1:~$ minikube service node-service --url
+http://192.168.49.2:32680
+intime@knode1:~$ curl http://192.168.49.2:32680
+Hello Node!
+
+
+intime@knode1:~$ kubectl edit deploy node-deployment
+Edit cancelled, no changes made.
+
+intime@knode1:~$ kubectl edit deploy node-deployment
+deployment.apps/node-deployment edited
+
+intime@knode1:~$ kubectl autoscale deploy node-deployment --min 1 --max 5 --cpu-percent 20
+horizontalpodautoscaler.autoscaling/node-deployment autoscaled
+
+intime@knode1:~$ kubectl edit deploy node-deployment
+deployment.apps/node-deployment edited
+
+intime@knode1:~$ kubectl autoscale deploy node-deployment --min 1 --max 5 --cpu-percent 20
+horizontalpodautoscaler.autoscaling/node-deployment autoscaled
+
+intime@knode1:~$ kubectl get hpa
+NAME              REFERENCE                    TARGETS         MINPODS   MAXPODS   REPLICAS   AGE
+node-deployment   Deployment/node-deployment   <unknown>/20%   1         5         0          8s
+
+
+intime@knode1:~$ kubectl describe hpa node-deployment
+Name:                                                  node-deployment
+Namespace:                                             default
+Labels:                                                <none>
+Annotations:                                           <none>
+CreationTimestamp:                                     Thu, 13 Jan 2022 00:21:57 +0530
+Reference:                                             Deployment/node-deployment
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  0% (0) / 20%
+Min replicas:                                          1
+Max replicas:                                          5
+Deployment pods:                                       1 current / 1 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+Events:           <none>
+
+    

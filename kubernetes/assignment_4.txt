@@ -1,0 +1,424 @@
+1. first download metrics server and then go to the yml file which are created by metrics and got to the inside the container block where certification are mentioned and add this line --kubelet-insecure-tls
+
+intime@master:~$ wget  https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+
+intime@master:~$ kubectl -n kube-system get pods
+NAME                               READY   STATUS    RESTARTS         AGE
+coredns-78fcd69978-xxctk           1/1     Running   2 (12h ago)      35h
+etcd-minikube                      1/1     Running   5 (12h ago)      36h
+kube-apiserver-minikube            1/1     Running   12 (12h ago)     36h
+kube-controller-manager-minikube   1/1     Running   16 (12h ago)     36h
+kube-proxy-pstrw                   1/1     Running   2 (12h ago)      35h
+kube-scheduler-minikube            1/1     Running   8 (12h ago)      36h
+metrics-server-56c7847647-kfjwp    1/1     Running   0                39m
+storage-provisioner                1/1     Running   10 (4h28m ago)   35h
+intime@master:~$ kubectl -n kube-system logs metrics-server-56c7847647-kfjwp
+I0112 04:42:36.826720       1 serving.go:341] Generated self-signed cert (/tmp/apiserver.crt, /tmp/apiserver.key)
+I0112 04:42:37.348807       1 requestheader_controller.go:169] Starting RequestHeaderAuthRequestController
+I0112 04:42:37.348837       1 shared_informer.go:240] Waiting for caches to sync for RequestHeaderAuthRequestController
+I0112 04:42:37.348870       1 configmap_cafile_content.go:202] Starting client-ca::kube-system::extension-apiserver-authentication::requestheader-client-ca-file
+I0112 04:42:37.348873       1 shared_informer.go:240] Waiting for caches to sync for client-ca::kube-system::extension-apiserver-authentication::requestheader-client-ca-file
+I0112 04:42:37.348814       1 configmap_cafile_content.go:202] Starting client-ca::kube-system::extension-apiserver-authentication::client-ca-file
+I0112 04:42:37.349019       1 shared_informer.go:240] Waiting for caches to sync for client-ca::kube-system::extension-apiserver-authentication::client-ca-file
+I0112 04:42:37.349294       1 secure_serving.go:202] Serving securely on [::]:4443
+I0112 04:42:37.349435       1 dynamic_serving_content.go:130] Starting serving-cert::/tmp/apiserver.crt::/tmp/apiserver.key
+I0112 04:42:37.349460       1 tlsconfig.go:240] Starting DynamicServingCertificateController
+I0112 04:42:37.449977       1 shared_informer.go:247] Caches are synced for client-ca::kube-system::extension-apiserver-authentication::requestheader-client-ca-file 
+I0112 04:42:37.450229       1 shared_informer.go:247] Caches are synced for client-ca::kube-system::extension-apiserver-authentication::client-ca-file 
+I0112 04:42:37.454622       1 shared_informer.go:247] Caches are synced for RequestHeaderAuthRequestController 
+
+
+intime@master:~$ kubectl -n kube-system get all
+NAME                                   READY   STATUS    RESTARTS         AGE
+pod/coredns-78fcd69978-xxctk           1/1     Running   2 (12h ago)      35h
+pod/etcd-minikube                      1/1     Running   5 (12h ago)      36h
+pod/kube-apiserver-minikube            1/1     Running   12 (12h ago)     36h
+pod/kube-controller-manager-minikube   1/1     Running   16 (12h ago)     36h
+pod/kube-proxy-pstrw                   1/1     Running   2 (12h ago)      35h
+pod/kube-scheduler-minikube            1/1     Running   8 (12h ago)      36h
+pod/metrics-server-56c7847647-kfjwp    1/1     Running   0                41m
+pod/storage-provisioner                1/1     Running   10 (4h30m ago)   35h
+
+NAME                     TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)                  AGE
+service/kube-dns         ClusterIP   10.96.0.10    <none>        53/UDP,53/TCP,9153/TCP   35h
+service/metrics-server   ClusterIP   10.98.60.97   <none>        443/TCP                  41m
+
+NAME                        DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
+daemonset.apps/kube-proxy   1         1         1       1            1           kubernetes.io/os=linux   35h
+
+NAME                             READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/coredns          1/1     1            1           35h
+deployment.apps/metrics-server   1/1     1            1           41m
+
+NAME                                        DESIRED   CURRENT   READY   AGE
+replicaset.apps/coredns-78fcd69978          1         1         1       35h
+replicaset.apps/metrics-server-56c7847647   1         1         1       41m
+
+
+
+------>> hpa
+
+intime@master:~$ kubectl create deployment apachesever --image=ubuntu/apache2
+deployment.apps/apachesever created
+
+intime@master:~$ kubectl expose deploy apachesever --port 80 --type=NodePort
+service/apachesever exposed
+
+intime@master:~$ kubectl get all
+NAME                                    READY   STATUS    RESTARTS      AGE
+pod/apachesever-854975585c-kkbx6        1/1     Running   0             39s
+pod/mypod                               1/1     Running   1 (14h ago)   21h
+pod/mypod2                              1/1     Running   1 (14h ago)   21h
+pod/nginx-deployment-84cd76b964-q7vxl   1/1     Running   2 (14h ago)   35h
+
+NAME                    TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+service/apachesever     NodePort    10.110.233.177   <none>        80:32229/TCP   7s
+service/kubernetes      ClusterIP   10.96.0.1        <none>        443/TCP        38h
+service/nginx-service   NodePort    10.105.229.245   <none>        80:30635/TCP   35h
+
+NAME                               READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/apachesever        1/1     1            1           39s
+deployment.apps/nginx-deployment   1/1     1            1           35h
+
+NAME                                          DESIRED   CURRENT   READY   AGE
+replicaset.apps/apachesever-854975585c        1         1         1       39s
+replicaset.apps/nginx-deployment-84cd76b964   1         1         1       35h
+
+intime@master:~$ minikube service apachesever --url
+http://192.168.49.2:32229
+
+intime@master:~$ watch kubectl get all
+
+intime@master:~$ kubectl autoscale deploy apachesever --min 1 --max 5 --cpu-percent 20
+horizontalpodautoscaler.autoscaling/apachesever autoscaled
+
+intime@master:~$ kubectl describe hpa apachesever
+Name:                                                  apachesever
+Namespace:                                             default
+Labels:                                                <none>
+Annotations:                                           <none>
+CreationTimestamp:                                     Wed, 12 Jan 2022 12:43:33 +0530
+Reference:                                             Deployment/apachesever
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  <unknown> / 20%
+Min replicas:                                          1
+Max replicas:                                          5
+Deployment pods:                                       1 current / 0 desired
+Conditions:
+  Type           Status  Reason                   Message
+  ----           ------  ------                   -------
+  AbleToScale    True    SucceededGetScale        the HPA controller was able to get the target's current scale
+  ScalingActive  False   FailedGetResourceMetric  the HPA was unable to compute the replica count: failed to get cpu utilization: missing request for cpu
+Events:
+  Type     Reason                        Age                   From                       Message
+  ----     ------                        ----                  ----                       -------
+  Warning  FailedGetResourceMetric       10s (x10 over 2m26s)  horizontal-pod-autoscaler  failed to get cpu utilization: missing request for cpu
+  Warning  FailedComputeMetricsReplicas  10s (x10 over 2m26s)  horizontal-pod-autoscaler  invalid metrics (1 invalid out of 1), first error is: failed to get cpu utilization: missing request for cpu
+
+intime@master:~$ 
+
+intime@master:~$ kubectl edit deploy apachesever
+deployment.apps/apachesever edited #go there and add resources limits and requests
+intime@master:~$ kubectl autoscale deploy apachesever --min 1 --max 5 --cpu-percent 20
+horizontalpodautoscaler.autoscaling/apachesever autoscaled
+intime@master:~$ kubectl describe hpa apachesever
+Name:                                                  apachesever
+Namespace:                                             default
+Labels:                                                <none>
+Annotations:                                           <none>
+CreationTimestamp:                                     Wed, 12 Jan 2022 13:38:50 +0530
+Reference:                                             Deployment/apachesever
+Metrics:                                               ( current / target )
+  resource cpu on pods  (as a percentage of request):  0% (1m) / 20%
+Min replicas:                                          1
+Max replicas:                                          5
+Deployment pods:                                       1 current / 1 desired
+Conditions:
+  Type            Status  Reason               Message
+  ----            ------  ------               -------
+  AbleToScale     True    ScaleDownStabilized  recent recommendations were higher than current one, applying the highest recent recommendation
+  ScalingActive   True    ValidMetricFound     the HPA was able to successfully calculate a replica count from cpu resource utilization (percentage of request)
+  ScalingLimited  False   DesiredWithinRange   the desired count is within the acceptable range
+Events:           <none>
+
+intime@master:~$ kubectl top pods
+NAME                           CPU(cores)   MEMORY(bytes)   
+apachesever-7675df5d5c-d9f7n   1m           5Mi   
+
+intime@master:~$ siege -q -c 5 -t 2m http://192.168.49.2:32229
+^C
+Lifting the server siege...intime@master:~$ kubectl top pods
+NAME                           CPU(cores)   MEMORY(bytes)   
+apachesever-7675df5d5c-bsfb6   5m           5Mi             
+apachesever-7675df5d5c-d9f7n   1m           14Mi            
+apachesever-7675df5d5c-j9v76   1m           14Mi            
+apachesever-7675df5d5c-kmfhk   1m           13Mi            
+apachesever-7675df5d5c-wfdnz   1m           5Mi             
+
+
+intime@master:~$ kubectl describe deploy apachesever
+Name:                   apachesever
+Namespace:              default
+CreationTimestamp:      Wed, 12 Jan 2022 12:32:52 +0530
+Labels:                 app=apachesever
+Annotations:            deployment.kubernetes.io/revision: 2
+Selector:               app=apachesever
+Replicas:               1 desired | 1 updated | 1 total | 1 available | 0 unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        0
+RollingUpdateStrategy:  25% max unavailable, 25% max surge
+Pod Template:
+  Labels:  app=apachesever
+  Containers:
+   apache2:
+    Image:      ubuntu/apache2
+    Port:       <none>
+    Host Port:  <none>
+    Limits:
+      cpu:  500m
+    Requests:
+      cpu:        250m
+    Environment:  <none>
+    Mounts:       <none>
+  Volumes:        <none>
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Progressing    True    NewReplicaSetAvailable
+  Available      True    MinimumReplicasAvailable
+OldReplicaSets:  <none>
+NewReplicaSet:   apachesever-7675df5d5c (1/1 replicas created)
+Events:
+  Type    Reason             Age    From                   Message
+  ----    ------             ----   ----                   -------
+  Normal  ScalingReplicaSet  16m    deployment-controller  Scaled up replica set apachesever-7675df5d5c to 1
+  Normal  ScalingReplicaSet  16m    deployment-controller  Scaled down replica set apachesever-854975585c to 0
+  Normal  ScalingReplicaSet  7m10s  deployment-controller  Scaled up replica set apachesever-7675df5d5c to 4
+  Normal  ScalingReplicaSet  6m55s  deployment-controller  Scaled up replica set apachesever-7675df5d5c to 5
+  Normal  ScalingReplicaSet  24s    deployment-controller  Scaled down replica set apachesever-7675df5d5c to 1
+
+
+---->vpa
+
+
+intime@master:~$ mkdir vpa_scaler
+
+intime@master:~$ cd vpa_scaler/
+
+intime@master:~/vpa_scaler$ git clone https://github.com/kubernetes/autoscaler.git
+Cloning into 'autoscaler'...
+remote: Enumerating objects: 136085, done.
+remote: Counting objects: 100% (2822/2822), done.
+remote: Compressing objects: 100% (2131/2131), done.
+remote: Total 136085 (delta 775), reused 1550 (delta 554), pack-reused 133263
+Receiving objects: 100% (136085/136085), 125.64 MiB | 719.00 KiB/s, done.
+Resolving deltas: 100% (87313/87313), done.
+Updating files: 100% (23433/23433), done.
+
+intime@master:~/vpa_scaler$ ls
+autoscaler
+
+intime@master:~/vpa_scaler$ cd autoscaler/
+intime@master:~/vpa_scaler/autoscaler$ ls
+addon-resizer  builder  charts  cluster-autoscaler  code-of-conduct.md  CONTRIBUTING.md  hack  LICENSE  OWNERS  README.md  SECURITY_CONTACTS  vertical-pod-autoscaler
+intime@master:~/vpa_scaler/autoscaler$ cd vertical-pod-autoscaler/
+intime@master:~/vpa_scaler/autoscaler/vertical-pod-autoscaler$ ls
+builder  common  deploy  e2e  enhancements  examples  FAQ.md  go.mod  go.sum  hack  MIGRATE.md  OWNERS  pkg  README.md  vendor
+intime@master:~/vpa_scaler/autoscaler/vertical-pod-autoscaler$ cd hack/
+intime@master:~/vpa_scaler/autoscaler/vertical-pod-autoscaler/hack$ ls
+boilerplate.go.txt        deploy-for-e2e.sh     run-e2e.sh        update-codegen.sh                 verify-codegen.sh     vpa-down.sh          vpa-process-yamls.sh  warn-obsolete-vpa-objects.sh
+convert-alpha-objects.sh  generate-crd-yaml.sh  run-e2e-tests.sh  update-kubernetes-deps-in-e2e.sh  vpa-apply-upgrade.sh  vpa-process-yaml.sh  vpa-up.sh
+
+
+
+intime@master:~/vpa_scaler/autoscaler/vertical-pod-autoscaler/hack$ ./vpa-up.sh
+customresourcedefinition.apiextensions.k8s.io/verticalpodautoscalercheckpoints.autoscaling.k8s.io created
+customresourcedefinition.apiextensions.k8s.io/verticalpodautoscalers.autoscaling.k8s.io created
+clusterrole.rbac.authorization.k8s.io/system:metrics-reader created
+clusterrole.rbac.authorization.k8s.io/system:vpa-actor created
+clusterrole.rbac.authorization.k8s.io/system:vpa-checkpoint-actor created
+clusterrole.rbac.authorization.k8s.io/system:evictioner created
+clusterrolebinding.rbac.authorization.k8s.io/system:metrics-reader created
+clusterrolebinding.rbac.authorization.k8s.io/system:vpa-actor created
+clusterrolebinding.rbac.authorization.k8s.io/system:vpa-checkpoint-actor created
+clusterrole.rbac.authorization.k8s.io/system:vpa-target-reader created
+clusterrolebinding.rbac.authorization.k8s.io/system:vpa-target-reader-binding created
+clusterrolebinding.rbac.authorization.k8s.io/system:vpa-evictionter-binding created
+serviceaccount/vpa-admission-controller created
+clusterrole.rbac.authorization.k8s.io/system:vpa-admission-controller created
+clusterrolebinding.rbac.authorization.k8s.io/system:vpa-admission-controller created
+clusterrole.rbac.authorization.k8s.io/system:vpa-status-reader created
+clusterrolebinding.rbac.authorization.k8s.io/system:vpa-status-reader-binding created
+serviceaccount/vpa-updater created
+deployment.apps/vpa-updater created
+serviceaccount/vpa-recommender created
+deployment.apps/vpa-recommender created
+Generating certs for the VPA Admission Controller in /tmp/vpa-certs.
+Generating RSA private key, 2048 bit long modulus (2 primes)
+..........................+++++
+...+++++
+e is 65537 (0x010001)
+Generating RSA private key, 2048 bit long modulus (2 primes)
+.............+++++
+..................................................+++++
+e is 65537 (0x010001)
+Signature ok
+subject=CN = vpa-webhook.kube-system.svc
+Getting CA Private Key
+Uploading certs to the cluster.
+secret/vpa-tls-certs created
+Deleting /tmp/vpa-certs.
+deployment.apps/vpa-admission-controller created
+service/vpa-webhook created
+
+
+intime@master:~/vpa_scaler/autoscaler/vertical-pod-autoscaler/hack$ kubectl get all -n kube-system
+NAME                                           READY   STATUS    RESTARTS       AGE
+pod/coredns-78fcd69978-xxctk                   1/1     Running   2 (18h ago)    41h
+pod/etcd-minikube                              1/1     Running   5 (18h ago)    42h
+pod/kube-apiserver-minikube                    1/1     Running   12 (18h ago)   42h
+pod/kube-controller-manager-minikube           1/1     Running   16 (18h ago)   42h
+pod/kube-proxy-pstrw                           1/1     Running   2 (18h ago)    41h
+pod/kube-scheduler-minikube                    1/1     Running   8 (18h ago)    43h
+pod/metrics-server-56c7847647-kfjwp            1/1     Running   0              6h47m
+pod/storage-provisioner                        1/1     Running   12 (48m ago)   41h
+pod/vpa-admission-controller-6cd546c4f-w8k8c   1/1     Running   0              6m59s
+pod/vpa-recommender-6855ff754-d7h88            1/1     Running   0              6m59s
+pod/vpa-updater-998bd8df9-hmwkj                1/1     Running   0              7m
+
+NAME                     TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)                  AGE
+service/kube-dns         ClusterIP   10.96.0.10      <none>        53/UDP,53/TCP,9153/TCP   41h
+service/metrics-server   ClusterIP   10.98.60.97     <none>        443/TCP                  6h47m
+service/vpa-webhook      ClusterIP   10.109.123.83   <none>        443/TCP                  6m59s
+
+NAME                        DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
+daemonset.apps/kube-proxy   1         1         1       1            1           kubernetes.io/os=linux   41h
+
+NAME                                       READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/coredns                    1/1     1            1           41h
+deployment.apps/metrics-server             1/1     1            1           6h47m
+deployment.apps/vpa-admission-controller   1/1     1            1           6m59s
+deployment.apps/vpa-recommender            1/1     1            1           7m
+deployment.apps/vpa-updater                1/1     1            1           7m
+
+NAME                                                 DESIRED   CURRENT   READY   AGE
+replicaset.apps/coredns-78fcd69978                   1         1         1       41h
+replicaset.apps/metrics-server-56c7847647            1         1         1       6h47m
+replicaset.apps/vpa-admission-controller-6cd546c4f   1         1         1       6m59s
+replicaset.apps/vpa-recommender-6855ff754            1         1         1       6m59s
+replicaset.apps/vpa-updater-998bd8df9                1         1         1       7m
+
+
+intime@master:~$ sudo vi vpa.yml
+
+intime@master:~$ cat vpa.yml
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: my-vpa
+spec:
+  targetRef:
+    apiVersion: "apps/v1"
+    kind:       Deployment
+    name:       apachesever 
+  updatePolicy:
+    updateMode: "Off"
+
+
+intime@master:~$ kubectl apply -f vpa.yml
+verticalpodautoscaler.autoscaling.k8s.io/my-vpa created
+
+intime@master:~$ kubectl get vpa
+NAME     MODE   CPU   MEM   PROVIDED   AGE
+my-vpa   Off                           6s
+
+intime@master:~$ kubectl describe vpa
+Name:         my-vpa
+Namespace:    default
+Labels:       <none>
+Annotations:  <none>
+API Version:  autoscaling.k8s.io/v1
+Kind:         VerticalPodAutoscaler
+Metadata:
+  Creation Timestamp:  2022-01-12T14:11:15Z
+  Generation:          2
+  Managed Fields:
+    API Version:  autoscaling.k8s.io/v1
+    Fields Type:  FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          .:
+          f:kubectl.kubernetes.io/last-applied-configuration:
+      f:spec:
+        .:
+        f:targetRef:
+          .:
+          f:apiVersion:
+          f:kind:
+          f:name:
+        f:updatePolicy:
+          .:
+          f:updateMode:
+    Manager:      kubectl-client-side-apply
+    Operation:    Update
+    Time:         2022-01-12T14:11:15Z
+    API Version:  autoscaling.k8s.io/v1
+    Fields Type:  FieldsV1
+    fieldsV1:
+      f:status:
+        .:
+        f:conditions:
+        f:recommendation:
+          .:
+          f:containerRecommendations:
+    Manager:         recommender
+    Operation:       Update
+    Time:            2022-01-12T14:11:52Z
+  Resource Version:  65689
+  UID:               2150de5a-074c-4d06-900a-06809ec609d4
+Spec:
+  Target Ref:
+    API Version:  apps/v1
+    Kind:         Deployment
+    Name:         apachesever
+  Update Policy:
+    Update Mode:  Off
+Status:
+  Conditions:
+    Last Transition Time:  2022-01-12T14:11:52Z
+    Status:                True
+    Type:                  RecommendationProvided
+  Recommendation:
+    Container Recommendations:
+      Container Name:  apache2
+      Lower Bound:
+        Cpu:     25m
+        Memory:  262144k
+      Target:
+        Cpu:     25m
+        Memory:  262144k
+      Uncapped Target:
+        Cpu:     25m
+        Memory:  262144k
+      Upper Bound:
+        Cpu:     109m
+        Memory:  262144k
+Events:          <none>
+
+---------->
+
+intime@master:~$ cat vpa.yml
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: my-vpa
+spec:
+  targetRef:
+    apiVersion: "apps/v1"
+    kind:       Deployment
+    name:       apachesever 
+  updatePolicy:
+    updateMode: "Auto"
+intime@master:~$ 

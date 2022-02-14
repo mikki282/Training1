@@ -1,0 +1,577 @@
+intime@master:~$ minikube dashboard
+🔌  Enabling dashboard ...
+    ▪ Using image kubernetesui/dashboard:v2.3.1
+    ▪ Using image kubernetesui/metrics-scraper:v1.0.7
+🤔  Verifying dashboard health ...
+🚀  Launching proxy ...
+🤔  Verifying proxy health ...
+🎉  Opening http://127.0.0.1:40661/api/v1/namespaces/kubernetes-dashboard/services/http:kubernetes-dashboard:/proxy/ in your default browser...
+
+----------->>
+intime@master:~$ minikube status
+minikube
+type: Control Plane
+host: Running
+kubelet: Running
+apiserver: Running
+kubeconfig: Configured
+
+
+---->
+intime@master:~$ minikube config set driver docker
+❗  These changes will take effect upon a minikube delete and then a minikube start
+intime@master:~$ minikube start --driver=docker
+😄  minikube v1.24.0 on Ubuntu 20.04 (vbox/amd64)
+✨  Using the docker driver based on user configuration
+👍  Starting control plane node minikube in cluster minikube
+🚜  Pulling base image ...
+    > gcr.io/k8s-minikube/kicbase: 0 B [___________________________] ?% ? p/s ?
+    > gcr.io/k8s-minikube/kicbase: 0 B [_______________________] ?% ? p/s 7m26s
+🔥  Creating docker container (CPUs=2, Memory=2200MB) ...
+🐳  Preparing Kubernetes v1.22.3 on Docker 20.10.8 ...
+    ▪ Generating certificates and keys ...
+    ▪ Booting up control plane ...
+    ▪ Configuring RBAC rules ...
+🔎  Verifying Kubernetes components...
+    ▪ Using image gcr.io/k8s-minikube/storage-provisioner:v5
+🌟  Enabled addons: storage-provisioner, default-storageclass
+🏄  Done! kubectl is now configured to use "minikube" cluster and "default" namespace by default
+intime@master:~$ 
+intime@master:~$ minikube status
+minikube
+type: Control Plane
+host: Running
+kubelet: Running
+apiserver: Running
+kubeconfig: Configured
+
+intime@master:~$ kubectl version
+Client Version: version.Info{Major:"1", Minor:"23", GitVersion:"v1.23.1", GitCommit:"86ec240af8cbd1b60bcc4c03c20da9b98005b92e", GitTreeState:"clean", BuildDate:"2021-12-16T11:41:01Z", GoVersion:"go1.17.5", Compiler:"gc", Platform:"linux/amd64"}
+Server Version: version.Info{Major:"1", Minor:"22", GitVersion:"v1.22.3", GitCommit:"c92036820499fedefec0f847e2054d824aea6cd1", GitTreeState:"clean", BuildDate:"2021-10-27T18:35:25Z", GoVersion:"go1.16.9", Compiler:"gc", Platform:"linux/amd64"}
+intime@master:~$ kubectl cluster-info
+Kubernetes control plane is running at https://192.168.49.2:8443
+CoreDNS is running at https://192.168.49.2:8443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+intime@master:~$ kubectl get nodes
+NAME       STATUS   ROLES                  AGE    VERSION
+minikube   Ready    control-plane,master   119s   v1.22.3
+intime@master:~$ 
+
+
+
+------>
+
+intime@master:~$ kubectl create deployment hello-minikube --image=k8s.gcr.io/echoserver:1.10
+deployment.apps/hello-minikube created
+intime@master:~$ kubectl expose deployment hello-minikube --type=NodePort --port=8080
+service/hello-minikube exposed
+intime@master:~$ kubectl get pods
+NAME                              READY   STATUS    RESTARTS   AGE
+hello-minikube-5d9b964bfb-cvm89   1/1     Running   0          98s
+intime@master:~$ kubectl get service
+NAME             TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+hello-minikube   NodePort    10.105.64.108   <none>        8080:31305/TCP   74s
+kubernetes       ClusterIP   10.96.0.1       <none>        443/TCP          60m
+
+intime@master:~$ minikube service hello-minikube --url
+http://192.168.49.2:31305
+
+intime@master:~$ kubectl delete service hello-minikube
+service "hello-minikube" deleted
+
+intime@master:~$ kubectl delete pod hello-minikube
+Error from server (NotFound): pods "hello-minikube" not found
+
+intime@master:~$ kubectl get pod
+NAME                              READY   STATUS    RESTARTS   AGE
+hello-minikube-5d9b964bfb-cvm89   1/1     Running   0          4m53s
+
+intime@master:~$ kubectl delete pod hello-minikube-5d9b964bfb-cvm89
+pod "hello-minikube-5d9b964bfb-cvm89" deleted
+
+intime@master:~$ kubectl get pod
+NAME                              READY   STATUS    RESTARTS   AGE
+hello-minikube-5d9b964bfb-7dfrm   1/1     Running   0          40s
+
+intime@master:~$ kubectl get service
+NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP   64m
+
+intime@master:~$ kubectl get nodes
+NAME       STATUS   ROLES                  AGE   VERSION
+minikube   Ready    control-plane,master   64m   v1.22.3
+
+intime@master:~$ kubectl delete pod hello-minikube-5d9b964bfb-7dfrm
+pod "hello-minikube-5d9b964bfb-7dfrm" deleted
+
+intime@master:~$ kubectl get pod
+NAME                              READY   STATUS    RESTARTS   AGE
+hello-minikube-5d9b964bfb-psd8w   1/1     Running   0          39s
+
+intime@master:~$ kubectl delete deployment hello-minikube
+deployment.apps "hello-minikube" deleted
+
+intime@master:~$ kubectl get pod
+NAME                              READY   STATUS        RESTARTS   AGE
+hello-minikube-5d9b964bfb-psd8w   1/1     Terminating   0          2m2s
+
+intime@master:~$ kubectl delete pod hello-minikube-5d9b964bfb-psd8w
+Error from server (NotFound): pods "hello-minikube-5d9b964bfb-psd8w" not found
+
+intime@master:~$ kubectl get pod
+No resources found in default namespace.
+
+
+--->
+
+intime@master:~$ minikube stop
+✋  Stopping node "minikube"  ...
+🛑  Powering off "minikube" via SSH ...
+🛑  1 node stopped.
+
+
+intime@master:~$ minikube status
+minikube
+type: Control Plane
+host: Stopped
+kubelet: Stopped
+apiserver: Stopped
+kubeconfig: Stopped
+
+
+intime@master:~$ kubectl get nodes
+NAME       STATUS   ROLES    AGE   VERSION
+minikube   Ready    <none>   12h   v1.22.3
+intime@master:~$ kubectl get ns
+NAME              STATUS   AGE
+default           Active   12h
+kube-node-lease   Active   12h
+kube-public       Active   12h
+kube-system       Active   12h
+intime@master:~$ kubectl api-resources | grep configmaps
+configmaps                        cm           v1                                     true         ConfigMap
+intime@master:~$ kubectl create cm fierstconfigmap --from-literal=resource_ip="10.0.1.0"
+configmap/fierstconfigmap created
+intime@master:~$ kubectl get cm
+NAME               DATA   AGE
+fierstconfigmap    1      9s
+kube-root-ca.crt   1      12h
+intime@master:~$ kubectl describe fierstconfigmap
+error: the server doesn't have a resource type "fierstconfigmap"
+intime@master:~$ kubectl describe cm fierstconfigmap
+Name:         fierstconfigmap
+Namespace:    default
+Labels:       <none>
+Annotations:  <none>
+
+Data
+====
+resource_ip:
+----
+10.0.1.0
+
+BinaryData
+====
+
+Events:  <none>
+intime@master:~$ kubectl create cm secondconfigmap --from-literal=resource_ip="10.0.1.0" --from-literal=resource_name="EC2_instance" --from literal=resource_password="mypassword"
+Error: unknown flag: --from
+See 'kubectl create configmap --help' for usage.
+intime@master:~$ kubectl create cm secondconfigmap --from-literal=resource_ip="10.0.1.0" --from-literal=resource_name="EC2_instance" --from-literal=resource_password="mypassword"
+configmap/secondconfigmap created
+intime@master:~$ kubectl get cm
+NAME               DATA   AGE
+fierstconfigmap    1      4m36s
+kube-root-ca.crt   1      12h
+secondconfigmap    3      11s
+intime@master:~$ kubectl describe cm secondconfigmap
+Name:         secondconfigmap
+Namespace:    default
+Labels:       <none>
+Annotations:  <none>
+
+Data
+====
+resource_ip:
+----
+10.0.1.0
+resource_name:
+----
+EC2_instance
+resource_password:
+----
+mypassword
+
+BinaryData
+====
+
+Events:  <none>
+intime@master:~$
+
+
+
+intime@master:~$ sudo vi app.txt
+[sudo] password for intime: 
+
+intime@master:~$ sudo vi app.txt
+
+intime@master:~$ kubectl create cm databseconfig --from-file=app.txt
+configmap/databseconfig created
+
+intime@master:~$ kubectl get cm
+NAME               DATA   AGE
+databseconfig      1      8s
+fierstconfigmap    1      17m
+kube-root-ca.crt   1      12h
+secondconfigmap    3      12m
+
+
+intime@master:~$ kubectl describe cm databseconfig
+Name:         databseconfig
+Namespace:    default
+Labels:       <none>
+Annotations:  <none>
+
+Data
+====
+app.txt:
+----
+#database details
+database_name="mysql"
+database_ip="10.0.2.0"
+database_pass="mypass123"
+
+#user_login_details
+user_name="root"
+
+user_pass="ss34"
+
+BinaryData
+====
+
+Events:  <none>
+
+
+
+intime@master:~$ mkdir properties
+
+intime@master:~$ cd properties/
+
+intime@master:~/properties$ ls
+
+intime@master:~/properties$ sudo vi demo.txt
+
+intime@master:~/properties$ sudo vi demo1.txt
+
+intime@master:~/properties$ ls
+demo1.txt  demo.txt
+
+intime@master:~$ kubectl create configmap folderconfig --from-file=properties/
+configmap/folderconfig created
+intime@master:~$ kubectl get cm
+NAME               DATA   AGE
+databseconfig      1      14m
+fierstconfigmap    1      31m
+folderconfig       2      7s
+kube-root-ca.crt   1      12h
+secondconfigmap    3      27m
+intime@master:~$ kubectl describe folderconfig 
+error: the server doesn't have a resource type "folderconfig"
+intime@master:~$ kubectl describe cm folderconfig 
+Name:         folderconfig
+Namespace:    default
+Labels:       <none>
+Annotations:  <none>
+
+Data
+====
+demo.txt:
+----
+#Application login details
+
+enter_username="root"
+enter_pass="12345passs"
+
+
+
+
+demo1.txt:
+----
+#super_user
+user_name="superuser"
+user_pass="hello1234"
+
+
+BinaryData
+====
+
+Events:  <none>
+intime@master:~$ 
+
+
+intime@master:~$ sudo vi env.sh
+intime@master:~$ cat env.sh 
+#This is my environment variable file
+
+variable1=value1
+variable2=value2
+variable3=value3
+intime@master:~$ kubectl create cm envcm --from-env-file=env.sh
+configmap/envcm created
+intime@master:~$ kubectl get cm
+NAME               DATA   AGE
+databseconfig      1      21m
+envcm              3      7s
+fierstconfigmap    1      38m
+folderconfig       2      6m41s
+kube-root-ca.crt   1      13h
+secondconfigmap    3      33m
+intime@master:~$ kubectl describe cm envcm
+Name:         envcm
+Namespace:    default
+Labels:       <none>
+Annotations:  <none>
+
+Data
+====
+variable3:
+----
+value3
+variable1:
+----
+value1
+variable2:
+----
+value2
+
+BinaryData
+====
+
+Events:  <none>
+
+
+
+intime@master:~$ kubectl create cm cm1 --from-literal=key1=value1 -o yaml
+apiVersion: v1
+data:
+  key1: value1
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2022-01-11T06:21:27Z"
+  name: cm1
+  namespace: default
+  resourceVersion: "7935"
+  uid: 9db79e18-0e05-437b-9f83-a94805b84b49
+intime@master:~$ kubectl get cm
+NAME               DATA   AGE
+cm1                1      48s
+databseconfig      1      32m
+fierstconfigmap    1      49m
+folderconfig       2      17m
+kube-root-ca.crt   1      13h
+secondconfigmap    3      45m
+intime@master:~$ kubectl describe cm cm1
+Name:         cm1
+Namespace:    default
+Labels:       <none>
+Annotations:  <none>
+
+Data
+====
+key1:
+----
+value1
+
+BinaryData
+====
+
+Events:  <none>
+intime@master:~$ cat cm1
+cat: cm1: No such file or directory
+intime@master:~$ ls
+ apiVersion:   Desktop      env.sh           'kubern...<?xml'        properties
+ app.txt       Dockerfile   filename.tar.gz   minikube-linux-amd64   Public
+ certs         Documents    index.html        Music                  Templates
+ cm.yml        Downloads    jenkins_volume    Pictures               Videos
+intime@master:~$ cat cm.yml
+apiVersion: v1
+data:
+  key1: value1
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: cm1
+intime@master:~$ rm cm.yml
+intime@master:~$ ls
+ apiVersion:   Dockerfile   filename.tar.gz   minikube-linux-amd64   Public
+ app.txt       Documents    index.html        Music                  Templates
+ certs         Downloads    jenkins_volume    Pictures               Videos
+ Desktop       env.sh      'kubern...<?xml'   properties
+intime@master:~$ 
+
+intime@master:~$ kubectl create secret --help
+Create a secret using specified subcommand.
+
+Available Commands:
+  docker-registry Create a secret for use with a Docker registry
+  generic         Create a secret from a local file, directory, or literal value
+  tls             Create a TLS secret
+
+Usage:
+  kubectl create secret [flags] [options]
+
+Use "kubectl <command> --help" for more information about a given command.
+Use "kubectl options" for a list of global command-line options (applies to all
+commands).
+intime@master:~$ 
+
+
+Create a secret based on a file, directory, or specified literal value.
+
+ A single secret may package one or more key/value pairs.
+
+ When creating a secret based on a file, the key will default to the basename of the file, and the value will default to the file content. If the basename is an invalid key or you wish to chose your own, you may specify an alternate key.
+
+ When creating a secret based on a directory, each file whose basename is a valid key in the directory will be packaged into the secret. Any directory entries except regular files are ignored (e.g. subdirectories, symlinks, devices, pipes, etc).
+
+Examples:
+  # Create a new secret named my-secret with keys for each file in folder bar
+  kubectl create secret generic my-secret --from-file=path/to/bar
+  
+  # Create a new secret named my-secret with specified keys instead of names on disk
+  kubectl create secret generic my-secret --from-file=ssh-privatekey=path/to/id_rsa --from-file=ssh-publickey=path/to/id_rsa.pub
+  
+  # Create a new secret named my-secret with key1=supersecret and key2=topsecret
+  kubectl create secret generic my-secret --from-literal=key1=supersecret --from-literal=key2=topsecret
+  
+  # Create a new secret named my-secret using a combination of a file and a literal
+  kubectl create secret generic my-secret --from-file=ssh-privatekey=path/to/id_rsa --from-literal=passphrase=topsecret
+  
+  # Create a new secret named my-secret from env files
+  kubectl create secret generic my-secret --from-env-file=path/to/foo.env --from-env-file=path/to/bar.env
+
+
+
+ntime@master:~$ kubectl create secret generic first --from-literal=name=mikki
+secret/first created
+intime@master:~$ kubectl get secret
+NAME                  TYPE                                  DATA   AGE
+default-token-w7pzm   kubernetes.io/service-account-token   3      14h
+first                 Opaque                                1      11s
+intime@master:~$ kubectl describe secret first
+Name:         first
+Namespace:    default
+Labels:       <none>
+Annotations:  <none>
+
+Type:  Opaque
+
+Data
+====
+name:  5 bytes
+
+
+intime@master:~$ kubectl get secret first
+NAME    TYPE     DATA   AGE
+first   Opaque   1      77s
+
+intime@master:~$ kubectl get secret first -o yaml
+apiVersion: v1
+data:
+  name: bWlra2k= <base64>
+kind: Secret
+metadata:
+  creationTimestamp: "2022-01-11T07:47:27Z"
+  name: first
+  namespace: default
+  resourceVersion: "11583"
+  uid: 1d9d23eb-1bf4-488e-830f-2c21a2c04f80
+type: Opaque
+
+intime@master:~$ echo -n "mikki" | base64
+bWlra2k=
+
+intime@master:~$ kubectl create secret generic filesecret --from-file=app.txt
+secret/filesecret created
+intime@master:~$ kubectl get secret filesecret -o yaml
+apiVersion: v1
+data:
+  app.txt: I2RhdGFiYXNlIGRldGFpbHMKZGF0YWJhc2VfbmFtZT0ibXlzcWwiCmRhdGFiYXNlX2lwPSIxMC4wLjIuMCIKCgoKZGF0YWJhc2VfcGFzcz0ibXlwYXNzMTIzIgoKI3VzZXJfbG9naW5fZGV0YWlscwp1c2VyX25hbWU9InJvb3QiCgp1c2VyX3Bhc3M9InNzMzQiCgoKCgoKCgo=
+kind: Secret
+metadata:
+  creationTimestamp: "2022-01-11T07:56:34Z"
+  name: filesecret
+  namespace: default
+  resourceVersion: "11966"
+  uid: eb5b97ab-d6c5-4dae-8eff-3bfe50d5f5d4
+type: Opaque
+intime@master:~$ 
+
+
+
+
+
+intime@master:~$ minikube status
+minikube
+type: Control Plane
+host: Running
+kubelet: Running
+apiserver: Running
+kubeconfig: Configured
+
+intime@master:~$ wget https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml -O metrics-server-components.yaml
+--2022-01-11 23:50:45--  https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+Resolving github.com (github.com)... 13.234.176.102
+Connecting to github.com (github.com)|13.234.176.102|:443... connected.
+HTTP request sent, awaiting response... 302 Found
+Location: https://github.com/kubernetes-sigs/metrics-server/releases/download/metrics-server-helm-chart-3.7.0/components.yaml [following]
+--2022-01-11 23:50:46--  https://github.com/kubernetes-sigs/metrics-server/releases/download/metrics-server-helm-chart-3.7.0/components.yaml
+Reusing existing connection to github.com:443.
+HTTP request sent, awaiting response... 302 Found
+Location: https://objects.githubusercontent.com/github-production-release-asset-2e65be/92132038/a922f23e-042e-4c31-aee6-4e917e02e67d?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIWNJYAX4CSVEH53A%2F20220111%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20220111T182046Z&X-Amz-Expires=300&X-Amz-Signature=331359fe884629a8801de5b79026623c49673f5a68bc03171a3e979b326ca366&X-Amz-SignedHeaders=host&actor_id=0&key_id=0&repo_id=92132038&response-content-disposition=attachment%3B%20filename%3Dcomponents.yaml&response-content-type=application%2Foctet-stream [following]
+--2022-01-11 23:50:46--  https://objects.githubusercontent.com/github-production-release-asset-2e65be/92132038/a922f23e-042e-4c31-aee6-4e917e02e67d?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIWNJYAX4CSVEH53A%2F20220111%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20220111T182046Z&X-Amz-Expires=300&X-Amz-Signature=331359fe884629a8801de5b79026623c49673f5a68bc03171a3e979b326ca366&X-Amz-SignedHeaders=host&actor_id=0&key_id=0&repo_id=92132038&response-content-disposition=attachment%3B%20filename%3Dcomponents.yaml&response-content-type=application%2Foctet-stream
+Resolving objects.githubusercontent.com (objects.githubusercontent.com)... 185.199.109.133, 185.199.110.133, 185.199.111.133, ...
+Connecting to objects.githubusercontent.com (objects.githubusercontent.com)|185.199.109.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 4117 (4.0K) [application/octet-stream]
+Saving to: ‘metrics-server-components.yaml’
+
+metrics-server-comp 100%[===================>]   4.02K  --.-KB/s    in 0.003s  
+
+2022-01-11 23:50:47 (1.34 MB/s) - ‘metrics-server-components.yaml’ saved [4117/4117]
+
+
+intime@master:~$ ls
+ apiVersion:   certs    Desktop      Documents   env.sh            index.html      'kubern...<?xml'   metrics-server-components.yaml   Music       Pictures     Public        secret.yml   testsecret.yml
+ app.txt       cm.yml   Dockerfile   Downloads   filename.tar.gz   jenkins_volume   main.yml          minikube-linux-amd64             mypod.yml   properties   secret2.yml   Templates    Videos
+
+intime@master:~$ sudo vi metrics-server-components.yaml 
+[sudo] password for intime: 
+
+intime@master:~$ sudo vi metrics-server-components.yaml # add in container block --kubelet-insecure-tls
+
+ntime@master:~$ kubectl apply -f metrics-server-components.yaml 
+serviceaccount/metrics-server created
+clusterrole.rbac.authorization.k8s.io/system:aggregated-metrics-reader created
+clusterrole.rbac.authorization.k8s.io/system:metrics-server created
+rolebinding.rbac.authorization.k8s.io/metrics-server-auth-reader created
+clusterrolebinding.rbac.authorization.k8s.io/metrics-server:system:auth-delegator created
+clusterrolebinding.rbac.authorization.k8s.io/system:metrics-server created
+service/metrics-server created
+deployment.apps/metrics-server created
+apiservice.apiregistration.k8s.io/v1beta1.metrics.k8s.io created
+
+
+intime@master:~$ kubectl get pods -n kube-system
+NAME                               READY   STATUS             RESTARTS        AGE
+coredns-78fcd69978-xxctk           1/1     Running            2 (105m ago)    24h
+etcd-minikube                      1/1     Running            5 (105m ago)    26h
+kube-apiserver-minikube            1/1     Running            12 (105m ago)   26h
+kube-controller-manager-minikube   1/1     Running            16 (105m ago)   26h
+kube-proxy-pstrw                   1/1     Running            2 (105m ago)    24h
+kube-scheduler-minikube            1/1     Running            8 (105m ago)    26h
+metrics-server-56c7847647-bfhmj    0/1     ImagePullBackOff   0               3m41s
+storage-provisioner                1/1     Running            9 (104m ago)    24h
+
+

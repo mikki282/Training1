@@ -1,0 +1,68 @@
+---->CREATE A SIMPLE POD AND SERVICE AND EXPOSE THAT POD 
+
+
+intime@master:~$ kubectl create deployment nginx-deployment --image=nginx
+
+deployment.apps/nginx-deployment created
+
+
+intime@master:~$ kubectl get deployment
+
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-deployment   0/1     1            0           13s
+
+intime@master:~$ kubectl get deployment
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-deployment   0/1     1            0           28s
+
+intime@master:~$ kubectl get deployment
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-deployment   1/1     1            1           2m49s
+
+intime@master:~$ kubectl get pods
+NAME                                READY   STATUS    RESTARTS   AGE
+nginx-deployment-84cd76b964-q7vxl   1/1     Running   0          3m20s
+
+
+intime@master:~$ kubectl epose deployment nginx-deployment --type=NodePort --name=nginx-service --port=80
+E0111 00:54:07.839638   32050 run.go:120] "command failed" err="unknown command \"epose\" for \"kubectl\"\n\nDid you mean this?\n\texpose\n"
+
+intime@master:~$ kubectl expose deployment nginx-deployment --type=NodePort --name=nginx-service --port=80
+service/nginx-service exposed
+
+
+intime@master:~$ kubectl get services
+NAME            TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+kubernetes      ClusterIP   10.96.0.1        <none>        443/TCP        174m
+nginx-service   NodePort    10.105.229.245   <none>        80:30635/TCP   20s
+
+intime@master:~$ minikube service --url nginx-service
+http://192.168.49.2:30635
+
+
+intime@master:~$ curl http://192.168.49.2:30635
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+intime@master:~$ 
+
